@@ -1,0 +1,37 @@
+{# ATS-friendly cover letter template. Populated by docgen.py with content
+   drawn from profile/my_profile.json, tailored to the specific job/company.
+   No fabricated claims should ever appear here. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ candidate_name }} - Cover Letter - {{ company }}</title>
+<style>
+  @page { size: A4; margin: 20mm 20mm; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #1a1a1a; line-height: 1.5; }
+  .header { margin-bottom: 18pt; }
+  .header .name { font-size: 14pt; font-weight: bold; }
+  .header .contact { font-size: 9.5pt; color: #444; }
+  .date { margin-bottom: 12pt; }
+  p { margin: 0 0 10pt 0; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="name">{{ candidate_name }}</div>
+    <div class="contact">{{ contact_line }}</div>
+  </div>
+  <div class="date">{{ date }}</div>
+
+  <p>Dear Hiring Manager,</p>
+
+  {% for paragraph in paragraphs %}
+  <p>{{ paragraph }}</p>
+  {% endfor %}
+
+  <p>Thank you for considering my application for the {{ job_title }} role at {{ company }}. I look forward to the
+  opportunity to discuss how my background aligns with your team's needs.</p>
+
+  <p>Sincerely,<br>{{ candidate_name }}</p>
+</body>
+</html>

@@ -1,0 +1,45 @@
+# Copy this file to config/config.yaml and edit with your own values.
+# config/config.yaml is gitignored since it may contain personal salary info.
+
+salary_expectation:
+  min: 120000
+  max: 150000
+  currency: AUD
+  period: annual        # annual | hourly
+
+search:
+  date_range_days: 7            # only consider postings within the last N days
+  locations:
+    - "Sydney NSW"
+    - "Remote"
+  keywords:                     # one search run per keyword, per enabled portal
+    - "Senior Data Engineer"
+    - "Platform Engineer"
+  exclude_keywords:              # postings whose title contains these are skipped
+    - "Junior"
+    - "Intern"
+  employment_types:              # full_time | part_time | contract | casual
+    - full_time
+  min_match_score_for_docs: 8    # matchScore threshold to trigger resume/cover letter generation
+
+portals:
+  seek:
+    enabled: true
+    base_url: "https://www.seek.com.au"
+  jora:
+    enabled: true
+    base_url: "https://au.jora.com"
+  linkedin:
+    enabled: true
+    base_url: "https://www.linkedin.com"
+  indeed:
+    enabled: true
+    base_url: "https://au.indeed.com"
+
+llm:
+  model: "openai/gpt-4o-mini"    # GitHub Models model id
+  # auth resolved automatically: `gh auth token`, falling back to GITHUB_MODELS_TOKEN env var
+
+output:
+  report_formats: [csv, html]
+  resume_max_pages: 3

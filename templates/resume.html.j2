@@ -1,0 +1,85 @@
+{# ATS-friendly resume template: plain semantic HTML, no tables/images/multi-column
+   layouts, so parsers can reliably extract text. Populated by docgen.py with
+   content selected/phrased by the LLM from profile/my_profile.json ONLY —
+   no fabricated content should ever appear here. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ candidate_name }} - Resume</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.35; }
+  h1 { font-size: 18pt; margin: 0 0 2pt 0; }
+  .contact { font-size: 9.5pt; color: #444; margin-bottom: 10pt; }
+  h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #999;
+       margin: 14pt 0 6pt 0; padding-bottom: 2pt; }
+  .entry { margin-bottom: 8pt; }
+  .entry-header { font-weight: bold; }
+  .entry-meta { font-size: 9.5pt; color: #555; font-style: italic; }
+  ul { margin: 3pt 0 0 0; padding-left: 14pt; }
+  li { margin-bottom: 2pt; }
+  .skills-list { margin: 0; padding-left: 0; list-style: none; }
+  .skills-list li { display: inline; }
+  .skills-list li:not(:last-child)::after { content: " \2022 "; }
+</style>
+</head>
+<body>
+  <h1>{{ candidate_name }}</h1>
+  <div class="contact">{{ contact_line }}</div>
+
+  {% if summary %}
+  <h2>Summary</h2>
+  <p>{{ summary }}</p>
+  {% endif %}
+
+  {% if skills %}
+  <h2>Skills</h2>
+  <ul class="skills-list">
+    {% for skill in skills %}<li>{{ skill }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if experiences %}
+  <h2>Experience</h2>
+  {% for exp in experiences %}
+  <div class="entry">
+    <div class="entry-header">{{ exp.title }} &mdash; {{ exp.employer }}</div>
+    <div class="entry-meta">{{ exp.start }} &ndash; {{ exp.end }}</div>
+    <ul>
+      {% for bullet in exp.bullets %}<li>{{ bullet }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if projects %}
+  <h2>Projects</h2>
+  {% for proj in projects %}
+  <div class="entry">
+    <div class="entry-header">{{ proj.name }}</div>
+    <ul>
+      {% for bullet in proj.bullets %}<li>{{ bullet }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if education %}
+  <h2>Education</h2>
+  {% for edu in education %}
+  <div class="entry">
+    <div class="entry-header">{{ edu.qualification }} &mdash; {{ edu.institution }}</div>
+    <div class="entry-meta">{{ edu.start }} &ndash; {{ edu.end }}</div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if certifications %}
+  <h2>Certifications</h2>
+  <ul>
+    {% for cert in certifications %}<li>{{ cert }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</body>
+</html>

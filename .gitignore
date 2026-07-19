@@ -1,0 +1,25 @@
+# Generated / local state — never commit
+state/
+output/
+profile/resumes/*
+!profile/resumes/.gitkeep
+profile/my_profile.json
+config/config.yaml
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Playwright
+state/browser_profile/
+
+# OS
+.DS_Store
+Thumbs.db
