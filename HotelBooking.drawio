@@ -51,7 +51,7 @@
           <mxGeometry height="50" width="50" x="493.46" y="476" as="geometry" />
         </mxCell>
         <mxCell id="EMgQgp_hRdSRFipmousV-10" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/Cache_Redis.svg;" value="" vertex="1">
-          <mxGeometry height="30" width="36.92" x="460.00000000000006" y="446" as="geometry" />
+          <mxGeometry height="30" width="36.92" x="466.00000000000006" y="458" as="geometry" />
         </mxCell>
         <mxCell id="EMgQgp_hRdSRFipmousV-15" edge="1" parent="1" source="EMgQgp_hRdSRFipmousV-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="EMgQgp_hRdSRFipmousV-8" value="">
           <mxGeometry relative="1" as="geometry" />
@@ -125,16 +125,16 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="EMgQgp_hRdSRFipmousV-40" connectable="0" parent="EMgQgp_hRdSRFipmousV-39" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="CDC" vertex="1">
+        <mxCell id="EMgQgp_hRdSRFipmousV-40" connectable="0" parent="EMgQgp_hRdSRFipmousV-39" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="CDC Async" vertex="1">
           <mxGeometry relative="1" x="-0.031" y="-3" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="EMgQgp_hRdSRFipmousV-41" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Property&lt;br&gt;Inventory&lt;br&gt;Metadata" vertex="1">
-          <mxGeometry height="60" width="78" x="635" y="164" as="geometry" />
+        <mxCell id="EMgQgp_hRdSRFipmousV-41" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Property&lt;br&gt;Inventory&lt;br&gt;Metadata(Rate, rating etc)" vertex="1">
+          <mxGeometry height="64" width="120" x="635" y="164" as="geometry" />
         </mxCell>
         <mxCell id="EMgQgp_hRdSRFipmousV-42" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Users&lt;br&gt;Bookings&lt;br&gt;Payments" vertex="1">
-          <mxGeometry height="60" width="86.54" x="543.46" y="431" as="geometry" />
+          <mxGeometry height="60" width="86.54" x="558.46" y="509" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
