@@ -4,7 +4,7 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="caAJe-bmyGhbfN8wqKQt-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="&lt;b&gt;Features&lt;br&gt;&lt;/b&gt;Paste Arbitrary text&lt;br&gt;Generate Paste Link&lt;br&gt;Share&lt;br&gt;Guest and Account&lt;br&gt;Support TTL&lt;br&gt;Support URL Shortening&lt;br&gt;Archival&lt;br&gt;No Media&lt;div&gt;Security?&lt;br&gt;Versioning?&lt;/div&gt;" vertex="1">
+        <mxCell id="caAJe-bmyGhbfN8wqKQt-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="&lt;b&gt;Features&lt;br&gt;&lt;/b&gt;Paste Arbitrary text&lt;br&gt;Generate Paste Link&lt;br&gt;Share&lt;br&gt;Guest and Account&lt;br&gt;Support TTL&lt;br&gt;Support URL Shortening&lt;br&gt;Archival&lt;br&gt;No Media&lt;div&gt;Security?&lt;br&gt;Versioning? vs Immutable&lt;/div&gt;" vertex="1">
           <mxGeometry height="190" width="150" x="50" y="50" as="geometry" />
         </mxCell>
         <mxCell id="caAJe-bmyGhbfN8wqKQt-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="&lt;b&gt;Scale&lt;/b&gt;&lt;br&gt;Upto 10 MB, Avg 10kb&lt;br&gt;1Mil DAU&lt;br&gt;5 Paste/day&lt;br&gt;Read:Write = 5:1&lt;br&gt;TPS = Avg = 5Mil/86400 = 60&lt;br&gt;Peak 120&lt;br&gt;50&lt;br&gt;Storage: 10KB * 5 * 30 * 1M = ~1.5TB PM&amp;nbsp;&lt;br&gt;Choice? NoSQL or Object Store" vertex="1">
@@ -101,10 +101,10 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="caAJe-bmyGhbfN8wqKQt-32" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#C925D1;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" value="Paste Data&lt;br&gt;ID Exists?" vertex="1">
-          <mxGeometry height="59" width="59" x="862.5" y="590" as="geometry" />
+          <mxGeometry height="59" width="59" x="862.5" y="648.5" as="geometry" />
         </mxCell>
         <mxCell id="caAJe-bmyGhbfN8wqKQt-33" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/Cache_Redis.svg;" value="" vertex="1">
-          <mxGeometry height="40" width="49.23" x="912" y="550" as="geometry" />
+          <mxGeometry height="32.5" width="40" x="912" y="640" as="geometry" />
         </mxCell>
         <mxCell id="caAJe-bmyGhbfN8wqKQt-34" edge="1" parent="1" source="caAJe-bmyGhbfN8wqKQt-42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="caAJe-bmyGhbfN8wqKQt-32">
           <mxGeometry relative="1" as="geometry" />
@@ -138,7 +138,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="caAJe-bmyGhbfN8wqKQt-42" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2_aws_microservice_extractor_for_net;" value="" vertex="1">
-          <mxGeometry height="48" width="48" x="864" y="520" as="geometry" />
+          <mxGeometry height="48" width="48" x="868" y="554" as="geometry" />
+        </mxCell>
+        <mxCell id="caAJe-bmyGhbfN8wqKQt-44" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;b&gt;Learnings&lt;/b&gt;&lt;br&gt;Missing API Design&lt;br&gt;Missing Microservices&amp;nbsp;&lt;br&gt;Missing API GW?&lt;br&gt;No Consistency Discussion/Transaction" vertex="1">
+          <mxGeometry height="130" width="208.5" x="921.5" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="caAJe-bmyGhbfN8wqKQt-45" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="WRITE Flow&lt;br&gt;&lt;blockquote style=&quot;margin: 0px 0px 0px 40px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; padding: 0px;&quot;&gt;POST /v1/paste&lt;br&gt;Request : {content: , user: , type: , TTL: }&lt;br&gt;Response: {ShortURL, LongURL}&lt;/blockquote&gt;&lt;div&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;READ&amp;nbsp;&amp;nbsp;&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;GET /v1/paste/{id}&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;Request: {}&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;Response: {content: , created:, }&lt;br&gt;&lt;br&gt;remove&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;DELETE /v1/paste/{id}&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;Request: {}&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;Response: 200 OK&lt;br&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="242" width="270" x="930" y="208" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
