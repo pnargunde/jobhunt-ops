@@ -1,9 +1,73 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="g8toNzq1eDYehU_WM-kf">
-    <mxGraphModel>
+    <mxGraphModel dx="1542" dy="562" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-3" edge="1" parent="1" source="7zzO96856mEMZ1RMx3mQ-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="7zzO96856mEMZ1RMx3mQ-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="Goal&lt;br&gt;Fair Usage&lt;br&gt;Protect from overload&lt;br&gt;Monetize&lt;br&gt;Per API? Per User?&lt;br&gt;Behavior? Drop vs Queue&lt;br&gt;429 include retry-after&lt;br&gt;Sub Millisec Latency&lt;div&gt;Quota Management&lt;br&gt;&lt;br&gt;&lt;div&gt;Out of Scope&lt;br&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="190" width="160" x="50" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-5" edge="1" parent="1" source="7zzO96856mEMZ1RMx3mQ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="7zzO96856mEMZ1RMx3mQ-4" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-2" parent="1" style="whiteSpace=wrap;html=1;align=left;rounded=0;" value="ALGOs&lt;br&gt;Token Bucket&lt;br&gt;Fixed Window&lt;br&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Logging&amp;nbsp;&lt;/span&gt;Window&amp;nbsp;&lt;br&gt;Sliding Window&lt;br&gt;Leaky Bucket&lt;br&gt;&lt;br&gt;Where to deploy?&lt;br&gt;Per Service, distributed and complicated and not scalable&lt;br&gt;Centralized Middleware eg: On API GW&lt;br&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="190" width="190" x="280" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-4" parent="1" style="whiteSpace=wrap;html=1;align=left;rounded=0;" value="Config:&lt;br&gt;Usage Key: (USER:API}&lt;br&gt;Algoithm&lt;br&gt;Response&lt;br&gt;&lt;br&gt;Tech: Redis&lt;br&gt;Atomic Operation&lt;br&gt;Server side Lua scripting" vertex="1">
+          <mxGeometry height="190" width="220" x="530" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-6" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2_aws_microservice_extractor_for_net;" value="" vertex="1">
+          <mxGeometry height="48" width="48" x="616" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-15" edge="1" parent="1" source="7zzO96856mEMZ1RMx3mQ-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="7zzO96856mEMZ1RMx3mQ-14" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Rate Limiter" vertex="1">
+          <mxGeometry height="114" width="110" x="390" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-7" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="500" y="524" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-8" edge="1" parent="1" source="7zzO96856mEMZ1RMx3mQ-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="7zzO96856mEMZ1RMx3mQ-6" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-10" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.users;" value="" vertex="1">
+          <mxGeometry height="78" width="78" x="120" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-11" edge="1" parent="1" source="7zzO96856mEMZ1RMx3mQ-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.43;entryDx=0;entryDy=0;entryPerimeter=0;" target="7zzO96856mEMZ1RMx3mQ-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-12" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/Cache_Redis.svg;" value="" vertex="1">
+          <mxGeometry height="40" width="49.23" x="400" y="484" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-17" edge="1" parent="1" source="7zzO96856mEMZ1RMx3mQ-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="7zzO96856mEMZ1RMx3mQ-16" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-19" connectable="0" parent="7zzO96856mEMZ1RMx3mQ-17" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Limit" vertex="1">
+          <mxGeometry relative="1" x="-0.2186" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-18" edge="1" parent="1" source="7zzO96856mEMZ1RMx3mQ-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="7zzO96856mEMZ1RMx3mQ-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-21" connectable="0" parent="7zzO96856mEMZ1RMx3mQ-18" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Under Limit" vertex="1">
+          <mxGeometry relative="1" x="-0.2385" y="-4" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-14" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;rounded=0;" value="" vertex="1">
+          <mxGeometry height="80" width="80" x="405" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-20" edge="1" parent="1" source="7zzO96856mEMZ1RMx3mQ-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="7zzO96856mEMZ1RMx3mQ-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7zzO96856mEMZ1RMx3mQ-16" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="429&lt;br&gt;Drop or Queue" vertex="1">
+          <mxGeometry height="60" width="120" x="385" y="782" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
