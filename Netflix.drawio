@@ -134,7 +134,7 @@
         <mxCell id="iauel5qAKzDfCbrlCLib-53" edge="1" parent="1" source="iauel5qAKzDfCbrlCLib-46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" target="iauel5qAKzDfCbrlCLib-36">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="iauel5qAKzDfCbrlCLib-54" parent="1" style="whiteSpace=wrap;html=1;align=left;rounded=0;" value="Upload Feature&lt;br&gt;S3 Presigned URLs&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
+        <mxCell id="iauel5qAKzDfCbrlCLib-54" parent="1" style="whiteSpace=wrap;html=1;align=left;rounded=0;" value="Upload Feature&lt;br&gt;S3 Presigned URLs&lt;br&gt;Multipart and resumable uploads&lt;br&gt;&lt;br&gt;View&lt;br&gt;webRTC, codecs,&amp;nbsp;&lt;br&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="150" width="230" x="520" y="300" as="geometry" />
         </mxCell>
       </root>
