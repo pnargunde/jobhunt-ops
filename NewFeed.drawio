@@ -1,9 +1,129 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="VShH7mCVN7RxLQEkGtTg">
-    <mxGraphModel>
+    <mxGraphModel dx="875" dy="388" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-3" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;" value="Users: (functional spec)&lt;br&gt;Posts Messages and Acitivty(like, share, comment)&lt;br&gt;Reads News Feed&lt;br&gt;&lt;br&gt;What is feed? (should remain abstract)&lt;br&gt;Ordered by recency - similicity&lt;br&gt;Ordered by popularity&lt;br&gt;Followed Topics&lt;br&gt;Ordered by some other analytics (follow and similar follow)&lt;br&gt;Relevant to location&lt;br&gt;Celebrity Problem? Hot Partition...&lt;br&gt;&lt;br&gt;Block, Unfollow, etc?&lt;br&gt;&lt;br&gt;Estimate&lt;br&gt;10mil DAU&lt;br&gt;2mil posts/day = 1KB&lt;br&gt;Storage/day = 2GB&lt;br&gt;TPS = 2x10e9 /10e4 = 2x10e5 = 200K TPS (high) -&amp;gt;&amp;nbsp; distributed DB, Still a read heavy system&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="300" width="320" x="10" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-2" parent="1" style="whiteSpace=wrap;html=1;align=left;rounded=0;" value="Design -&lt;br&gt;How to injest Feed? POST v1/user/posts/{}&lt;br&gt;How to build Feed? GET v1/user/feed/{}&lt;br&gt;&lt;br&gt;- Build on read* vs Build on write&lt;br&gt;- Users to User connection DB&lt;br&gt;- User ID to posts DB&lt;br&gt;&lt;br&gt;Post&lt;br&gt;User, Type, Timestamp, Tags(topics), media,&lt;br&gt;&lt;br&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="300" width="240" x="390" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-6" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-11" connectable="0" parent="zG2_bLNGklkaXzxGd7vh-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="GET FEED" vertex="1">
+          <mxGeometry relative="1" x="-0.1391" y="2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-4" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.users;" value="" vertex="1">
+          <mxGeometry height="40" width="40" x="29" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-9" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-8" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-5" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_load_balancing;" value="" vertex="1">
+          <mxGeometry height="50" width="50" x="160" y="565" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-20" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-19" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-21" connectable="0" parent="zG2_bLNGklkaXzxGd7vh-20" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Get Feed" vertex="1">
+          <mxGeometry relative="1" x="-0.1937" y="-2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-37" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-33" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-7" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2_aws_microservice_extractor_for_net;" value="FeedService" vertex="1">
+          <mxGeometry height="48" width="48" x="410" y="566" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-10" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-7" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-27" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="zG2_bLNGklkaXzxGd7vh-26">
+          <mxGeometry relative="1" x="0.0265" as="geometry">
+            <Array as="points">
+              <mxPoint x="310" y="694" />
+            </Array>
+            <mxPoint x="272.81509681209195" y="660" as="sourcePoint" />
+            <mxPoint x="390" y="720.0070909090907" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-8" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.auto_scaling2;" value="WebServers" vertex="1">
+          <mxGeometry height="48" width="48" x="284" y="566" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-12" parent="1" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.dynamo_db;fillColor=#2E73B8;gradientColor=none;" value="Users DB" vertex="1">
+          <mxGeometry height="50" width="40" x="414" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-13" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/databases/Cache_Redis.svg;points=[[0.5,0,0],[0.502,1,0],[0,0.5,0],[1,0.5,0],[0.982,0.056,0],[0.715,0.947,0],[0.275,0.938,0],[0.02,0.053,0]];" value="" vertex="1">
+          <mxGeometry height="26" width="32" x="393" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-48" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-47" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-49" connectable="0" parent="zG2_bLNGklkaXzxGd7vh-48" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Archive" vertex="1">
+          <mxGeometry relative="1" x="-0.0784" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-19" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Feeds DB" vertex="1">
+          <mxGeometry height="74" width="70" x="600" y="553" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-22" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/databases/Cache_Redis.svg;points=[[0.5,0,0],[0.502,1,0],[0,0.5,0],[1,0.5,0],[0.982,0.056,0],[0.715,0.947,0],[0.275,0.938,0],[0.02,0.053,0]];" value="" vertex="1">
+          <mxGeometry height="26" width="32" x="580" y="553" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-24" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-25" connectable="0" parent="zG2_bLNGklkaXzxGd7vh-24" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="POST FEED" vertex="1">
+          <mxGeometry relative="1" x="-0.2288" y="-2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-23" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.users;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="170" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-26" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2_aws_microservice_extractor_for_net;" value="PostService" vertex="1">
+          <mxGeometry height="48" width="48" x="410" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-29" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1;exitY=0.512;exitDx=0;exitDy=0;exitPerimeter=0;" target="zG2_bLNGklkaXzxGd7vh-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-46" connectable="0" parent="zG2_bLNGklkaXzxGd7vh-29" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="WriteThrough Cache" vertex="1">
+          <mxGeometry relative="1" x="0.3379" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-33" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ec2_aws_microservice_extractor_for_net;" value="User Service (filter, populatity etc)" vertex="1">
+          <mxGeometry height="48" width="48" x="410" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-36" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="zG2_bLNGklkaXzxGd7vh-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-40" edge="1" parent="1" source="zG2_bLNGklkaXzxGd7vh-26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zG2_bLNGklkaXzxGd7vh-39" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="458" y="694" as="sourcePoint" />
+            <mxPoint x="635" y="627" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-41" connectable="0" parent="zG2_bLNGklkaXzxGd7vh-40" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="POST" vertex="1">
+          <mxGeometry relative="1" x="-0.2016" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-39" parent="1" style="aspect=fixed;html=1;align=center;shadow=0;dashed=0;fillColor=#FF6A00;strokeColor=none;shape=mxgraph.alibaba_cloud.batchcompute;" value="PostProcessors" vertex="1">
+          <mxGeometry height="48" width="46.800000000000004" x="553.2" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="zG2_bLNGklkaXzxGd7vh-47" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Archive DB" vertex="1">
+          <mxGeometry height="74" width="70" x="600" y="399" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
