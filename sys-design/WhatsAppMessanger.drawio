@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="J_NcHYKgBQmxdZ42XEGd">
-    <mxGraphModel dx="746" dy="331" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="852" dy="377" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -36,7 +36,7 @@
           <mxGeometry height="30" width="161" x="69" y="290" as="geometry" />
         </mxCell>
         <mxCell id="oD6ItzfqS0iUwNnPW25h-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="Database Choices&lt;div&gt;SQL&amp;nbsp;&lt;br&gt;User DB&lt;/div&gt;&lt;div&gt;Group DB&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;NoSQL eg: Cassandra or Dynamo DB&lt;br&gt;Chat messages&lt;br&gt;Presence Service&lt;br&gt;Session&lt;br&gt;&lt;br&gt;Object Store&lt;br&gt;Media and Docs&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="190" x="760" y="70" as="geometry" />
+          <mxGeometry height="120" width="190" x="774" y="88" as="geometry" />
         </mxCell>
         <mxCell id="oD6ItzfqS0iUwNnPW25h-15" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="oD6ItzfqS0iUwNnPW25h-14" value="">
           <mxGeometry relative="1" as="geometry">
@@ -215,7 +215,7 @@
         <mxCell id="oD6ItzfqS0iUwNnPW25h-83" parent="1" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://icons.diagrams.net/assets/integration/1/3rd_Party.svg" value="Notification Service" vertex="1">
           <mxGeometry height="30" width="30" x="688" y="452" as="geometry" />
         </mxCell>
-        <mxCell id="oD6ItzfqS0iUwNnPW25h-85" parent="1" style="aspect=fixed;html=1;align=center;shadow=0;dashed=0;fillColor=#FF6A00;strokeColor=none;shape=mxgraph.alibaba_cloud.cassandra_wide-column_database_02;" value="" vertex="1">
+        <mxCell id="oD6ItzfqS0iUwNnPW25h-85" parent="1" style="aspect=fixed;html=1;align=center;shadow=0;dashed=0;fillColor=#FF6A00;strokeColor=none;shape=mxgraph.alibaba_cloud.cassandra_wide-column_database_02;" value="chat DB, Cassandra" vertex="1">
           <mxGeometry height="54.900000000000006" width="51.3" x="230" y="482.1" as="geometry" />
         </mxCell>
         <mxCell id="oD6ItzfqS0iUwNnPW25h-86" edge="1" parent="1" source="oD6ItzfqS0iUwNnPW25h-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.807;entryY=0.634;entryDx=0;entryDy=0;entryPerimeter=0;" target="oD6ItzfqS0iUwNnPW25h-85">
