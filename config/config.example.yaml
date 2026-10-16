@@ -8,12 +8,18 @@ salary_expectation:
   period: annual        # annual | hourly
 
 search:
-  date_range_days: 7            # only consider postings within the last N days
+  date_range_days: 5            # only consider postings within the last N days (LinkedIn maps this to its native f_TPR filter)
   locations:
     - "Sydney NSW"
     - "Remote"
   keywords:                     # one search run per keyword, per enabled portal
-    - "Senior Data Engineer"
+    - "Team Lead"
+    - "Technical Lead"
+    - "Engineering Lead"
+    - "Senior Software Engineer"
+    - "Senior Software Developer"
+    - "Senior Backend Engineer"
+    - "Engineering Manager"
     - "Platform Engineer"
   exclude_keywords:              # postings whose title contains these are skipped
     - "Junior"
@@ -25,7 +31,7 @@ search:
 portals:
   seek:
     enabled: true
-    base_url: "https://www.seek.com.au"
+    base_url: "https://au.seek.com"
   jora:
     enabled: true
     base_url: "https://au.jora.com"
@@ -37,8 +43,19 @@ portals:
     base_url: "https://au.indeed.com"
 
 llm:
-  model: "openai/gpt-4o-mini"    # GitHub Models model id
-  # auth resolved automatically: `gh auth token`, falling back to GITHUB_MODELS_TOKEN env var
+  model: "openai/gpt-4o-mini"    # model id (format depends on provider - see below)
+  provider: "github_models"      # github_models | openai | anthropic
+  # api_key_env: "OPENAI_API_KEY"  # optional: override which env var holds the API key
+  #
+  # github_models (default): free/included tier, auth via `gh auth token`
+  #   (falls back to GITHUB_MODELS_TOKEN env var). Model ids look like
+  #   "openai/gpt-4o-mini", "openai/gpt-4o".
+  # openai: direct OpenAI API for full model access + no rate-limit sharing.
+  #   Requires OPENAI_API_KEY env var (or api_key_env override). Model ids
+  #   look like "gpt-4o", "gpt-4.1".
+  # anthropic: direct Anthropic API - often strong for long-form writing like
+  #   resumes/cover letters. Requires ANTHROPIC_API_KEY env var (or
+  #   api_key_env override). Model ids look like "claude-3-5-sonnet-20241022".
 
 output:
   report_formats: [csv, html]

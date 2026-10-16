@@ -3,6 +3,7 @@ state/
 output/
 profile/resumes/*
 !profile/resumes/.gitkeep
+profile/ProfileDump.txt
 profile/my_profile.json
 config/config.yaml
 

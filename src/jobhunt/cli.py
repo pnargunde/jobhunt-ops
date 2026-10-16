@@ -47,8 +47,8 @@ def _load_profile_or_exit() -> dict:
     profile = profile_module.load_existing_profile()
     if profile is None:
         rprint(
-            "[red]No profile found.[/red] Run [bold]jobhunt profile build[/bold] first "
-            "(after adding resumes to profile/resumes/)."
+            "[red]No profile found.[/red] Run [bold]jobhunt profile-build[/bold] first "
+            "(after creating profile/ProfileDump.txt and/or adding resumes to profile/resumes/)."
         )
         raise typer.Exit(code=1)
     return profile
@@ -60,10 +60,11 @@ def profile_build(
     model: Optional[str] = typer.Option(None, help="Override the configured LLM model."),
     config_path: Optional[str] = typer.Option(None, "--config", envvar="JOBHUNT_CONFIG"),
 ) -> None:
-    """Build/update MyProfile from resumes in profile/resumes/.
+    """Build/update MyProfile from profile/ProfileDump.txt (primary source, one file
+    you keep updated) and/or resumes in profile/resumes/ (supplemental).
 
-    Run this INFREQUENTLY — only when you add a new resume, skill, or project.
-    It is intentionally NOT part of `run-all`.
+    Run this INFREQUENTLY — only when you update ProfileDump.txt or add a new
+    skill/project/resume. It is intentionally NOT part of `run-all`.
     """
     cfg = load_config(config_path)
     profile = profile_module.build_profile(model=model or cfg.llm.model, force=force)
@@ -97,7 +98,8 @@ def search(
     portal: Optional[str] = typer.Option(None, help="Limit to a single portal (default: all enabled)."),
     config_path: Optional[str] = typer.Option(None, "--config", envvar="JOBHUNT_CONFIG"),
 ) -> None:
-    """Search configured keywords/locations across enabled portals and upsert results into the DB."""
+    """Search configured keywords/locations across enabled portals, fetch each job's
+    full description, and upsert results into the DB."""
     cfg = load_config(config_path)
     portals_to_run = [portal] if portal else cfg.enabled_portals()
 
@@ -115,15 +117,28 @@ def search(
                 for keyword in cfg.search.keywords:
                     for location in cfg.search.locations or [""]:
                         try:
-                            listings = module.search(page, keyword, location, base_url) if base_url else module.search(page, keyword, location)
+                            listings = module.search(
+                                page, keyword, location, base_url, date_range_days=cfg.search.date_range_days
+                            )
                         except NotImplementedError as exc:
                             rprint(f"[yellow]{portal_name}: {exc}[/yellow]")
                             continue
+                        except TypeError:
+                            # Scraper doesn't accept date_range_days yet - fall back gracefully.
+                            listings = module.search(page, keyword, location, base_url)
+                        kept = 0
                         for listing in listings:
                             if any(x.lower() in listing.title.lower() for x in cfg.search.exclude_keywords):
                                 continue
+                            existing = db_module.get_job(conn, listing.url)
+                            if existing is None or not existing["jd_text"]:
+                                try:
+                                    listing.jd_text = module.fetch_job_description(page, listing.url)
+                                except Exception as exc:  # noqa: BLE001 - one bad JD page shouldn't stop the run
+                                    rprint(f"[yellow]{portal_name}: failed to fetch JD for {listing.url}: {exc}[/yellow]")
                             db_module.upsert_job(conn, listing)
-                        rprint(f"[green]{portal_name}[/green] '{keyword}' in '{location}': {len(listings)} listing(s)")
+                            kept += 1
+                        rprint(f"[green]{portal_name}[/green] '{keyword}' in '{location}': {kept} listing(s)")
                 scraper_base.close_persistent_context(context)
             except Exception as exc:  # noqa: BLE001 - one portal failing must not stop the rest
                 rprint(f"[red]Search failed for portal '{portal_name}': {exc}[/red]")
@@ -133,13 +148,25 @@ def search(
 @app.command()
 def score(
     config_path: Optional[str] = typer.Option(None, "--config", envvar="JOBHUNT_CONFIG"),
-    model: Optional[str] = typer.Option(None),
+    model: Optional[str] = typer.Option(None, help="Override the configured LLM model."),
+    provider: Optional[str] = typer.Option(
+        None, help="Override the configured LLM provider: github_models | openai | anthropic."
+    ),
+    api_key_env: Optional[str] = typer.Option(
+        None, "--api-key-env", help="Override which env var holds the API key for the chosen provider."
+    ),
 ) -> None:
     """Score all unscored jobs in the DB against MyProfile (1-10 matchScore)."""
     cfg = load_config(config_path)
     profile = _load_profile_or_exit()
     with db_module.connect() as conn:
-        count = matcher_module.score_pending_jobs(conn, profile, model=model or cfg.llm.model)
+        count = matcher_module.score_pending_jobs(
+            conn,
+            profile,
+            model=model or cfg.llm.model,
+            provider=provider or cfg.llm.provider,
+            api_key_env=api_key_env or cfg.llm.api_key_env,
+        )
     rprint(f"[green]Scored {count} job(s).[/green]")
 
 
@@ -148,7 +175,16 @@ def generate(
     candidate_name: str = typer.Option(..., help="Your full name for the resume/cover letter header."),
     contact_line: str = typer.Option(..., help="e.g. 'email@example.com | +61 4xx xxx xxx | Sydney, NSW'"),
     config_path: Optional[str] = typer.Option(None, "--config", envvar="JOBHUNT_CONFIG"),
-    model: Optional[str] = typer.Option(None),
+    model: Optional[str] = typer.Option(None, help="Override the configured LLM model."),
+    provider: Optional[str] = typer.Option(
+        None, help="Override the configured LLM provider: github_models | openai | anthropic."
+    ),
+    api_key_env: Optional[str] = typer.Option(
+        None, "--api-key-env", help="Override which env var holds the API key for the chosen provider."
+    ),
+    force: bool = typer.Option(
+        False, "--force", help="Regenerate even jobs that already have a resume (e.g. after a template/prompt change)."
+    ),
 ) -> None:
     """Generate tailored resume + cover letter PDFs for jobs above the matchScore threshold."""
     cfg = load_config(config_path)
@@ -164,6 +200,9 @@ def generate(
             min_score=cfg.search.min_match_score_for_docs,
             model=model or cfg.llm.model,
             max_pages=cfg.output.resume_max_pages,
+            force=force,
+            provider=provider or cfg.llm.provider,
+            api_key_env=api_key_env or cfg.llm.api_key_env,
         )
     rprint(f"[green]Generated documents for {count} job(s) in {output_dir}[/green]")
 
@@ -211,6 +250,23 @@ def status(url: str, new_status: str) -> None:
             raise typer.Exit(code=1)
         db_module.set_status(conn, url, new_status)
     rprint(f"[green]Updated status for {url} -> {new_status}[/green]")
+
+
+@app.command()
+def purge(
+    portal: str = typer.Option(..., help="Portal name to remove all stored jobs for, e.g. 'linkedin'."),
+    yes: bool = typer.Option(False, "--yes", help="Skip the confirmation prompt."),
+) -> None:
+    """Delete all stored jobs for a given portal (e.g. to discard a batch
+    scraped before a scraper fix, without touching other portals' data)."""
+    if not yes:
+        confirm = typer.confirm(f"This will permanently delete all stored '{portal}' jobs. Continue?")
+        if not confirm:
+            rprint("[yellow]Cancelled.[/yellow]")
+            raise typer.Exit(code=0)
+    with db_module.connect() as conn:
+        count = db_module.delete_jobs_by_portal(conn, portal)
+    rprint(f"[green]Deleted {count} job(s) for portal '{portal}'.[/green]")
 
 
 @app.command("run-all")

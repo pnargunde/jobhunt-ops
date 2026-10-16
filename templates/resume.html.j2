@@ -8,43 +8,73 @@
 <meta charset="utf-8">
 <title>{{ candidate_name }} - Resume</title>
 <style>
-  @page { size: A4; margin: 18mm 16mm; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.35; }
-  h1 { font-size: 18pt; margin: 0 0 2pt 0; }
-  .contact { font-size: 9.5pt; color: #444; margin-bottom: 10pt; }
-  h2 { font-size: 12pt; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #999;
-       margin: 14pt 0 6pt 0; padding-bottom: 2pt; }
-  .entry { margin-bottom: 8pt; }
+  /* Professional dark-navy / slate-blue accent palette on near-black body
+     text - adds visual polish while staying well within ATS-safe territory
+     (colors are cosmetic only; no meaning is conveyed by color alone, and
+     contrast ratios stay high for readability/printing). */
+  :root {
+    --ink: #1a1a1a;
+    --navy: #1b2a4a;
+    --accent: #2f5d8a;
+    --rule: #b7c4d6;
+    --muted: #5b6675;
+  }
+  @page { size: A4; margin: 16mm 16mm; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: var(--ink); line-height: 1.32; }
+  h1 { font-size: 20pt; margin: 0 0 1pt 0; color: var(--navy); }
+  .headline { font-size: 11pt; color: var(--accent); font-weight: bold; margin-bottom: 6pt; }
+  .contact { font-size: 9.5pt; color: var(--muted); margin-bottom: 8pt; }
+  h2 { font-size: 11.5pt; text-transform: uppercase; letter-spacing: 0.5px; color: var(--navy);
+       border-bottom: 1.5px solid var(--accent); margin: 11pt 0 5pt 0; padding-bottom: 2pt; }
+  .entry { margin-bottom: 7pt; }
   .entry-header { font-weight: bold; }
-  .entry-meta { font-size: 9.5pt; color: #555; font-style: italic; }
+  .entry-header .role-title { color: var(--navy); }
+  .entry-meta { font-size: 9.5pt; color: var(--muted); font-style: italic; }
   ul { margin: 3pt 0 0 0; padding-left: 14pt; }
   li { margin-bottom: 2pt; }
-  .skills-list { margin: 0; padding-left: 0; list-style: none; }
-  .skills-list li { display: inline; }
-  .skills-list li:not(:last-child)::after { content: " \2022 "; }
+  li::marker { color: var(--accent); }
+  p { margin: 3pt 0 0 0; }
+  /* Core Competencies: simple two-column label/value table, mirroring a
+     traditional resume "Skills" table for fast eyeballing. */
+  .competencies-table { width: 100%; border-collapse: collapse; margin-top: 2pt; }
+  .competencies-table td { vertical-align: top; padding: 2.5pt 0; font-size: 9.7pt; }
+  .competencies-table td.cat { width: 26%; font-weight: bold; color: var(--navy); padding-right: 10pt; white-space: nowrap; }
+  .competencies-table tr:not(:last-child) td { border-bottom: 0.5px solid #e3e8ef; }
+  /* Certifications: 2-column grid. Items still appear once each in normal
+     DOM/reading order, so ATS text extraction (which reads sequentially,
+     not by visual position) is unaffected. */
+  .grid-2 { display: flex; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
+  .grid-2 li { width: 50%; box-sizing: border-box; padding: 1pt 8pt 1pt 0; }
+  .project-tech { font-size: 9.3pt; color: var(--accent); margin-top: 1pt; }
 </style>
 </head>
 <body>
   <h1>{{ candidate_name }}</h1>
+  {% if headline %}<div class="headline">{{ headline }}</div>{% endif %}
   <div class="contact">{{ contact_line }}</div>
 
   {% if summary %}
-  <h2>Summary</h2>
+  <h2>Professional Summary</h2>
   <p>{{ summary }}</p>
   {% endif %}
 
-  {% if skills %}
-  <h2>Skills</h2>
-  <ul class="skills-list">
-    {% for skill in skills %}<li>{{ skill }}</li>{% endfor %}
-  </ul>
+  {% if skills_grouped %}
+  <h2>Core Competencies</h2>
+  <table class="competencies-table">
+    {% for group in skills_grouped %}
+    <tr>
+      <td class="cat">{{ group.category }}</td>
+      <td>{{ group['items'] | join(", ") }}</td>
+    </tr>
+    {% endfor %}
+  </table>
   {% endif %}
 
   {% if experiences %}
   <h2>Experience</h2>
   {% for exp in experiences %}
   <div class="entry">
-    <div class="entry-header">{{ exp.title }} &mdash; {{ exp.employer }}</div>
+    <div class="entry-header"><span class="role-title">{{ exp.title }}</span> &mdash; {{ exp.employer }}</div>
     <div class="entry-meta">{{ exp.start }} &ndash; {{ exp.end }}</div>
     <ul>
       {% for bullet in exp.bullets %}<li>{{ bullet }}</li>{% endfor %}
@@ -57,10 +87,9 @@
   <h2>Projects</h2>
   {% for proj in projects %}
   <div class="entry">
-    <div class="entry-header">{{ proj.name }}</div>
-    <ul>
-      {% for bullet in proj.bullets %}<li>{{ bullet }}</li>{% endfor %}
-    </ul>
+    <div class="entry-header"><span class="role-title">{{ proj.name }}</span>{% if proj.source_employer %} <span class="entry-meta">&mdash; {{ proj.source_employer }}</span>{% endif %}</div>
+    {% if proj.tech_line %}<div class="project-tech">{{ proj.tech_line | join(" \u00b7 ") }}</div>{% endif %}
+    <p>{{ proj.summary }}</p>
   </div>
   {% endfor %}
   {% endif %}
@@ -70,14 +99,14 @@
   {% for edu in education %}
   <div class="entry">
     <div class="entry-header">{{ edu.qualification }} &mdash; {{ edu.institution }}</div>
-    <div class="entry-meta">{{ edu.start }} &ndash; {{ edu.end }}</div>
+    {% if edu.start or edu.end %}<div class="entry-meta">{{ edu.start }}{% if edu.start and edu.end %} &ndash; {% endif %}{{ edu.end }}</div>{% endif %}
   </div>
   {% endfor %}
   {% endif %}
 
   {% if certifications %}
   <h2>Certifications</h2>
-  <ul>
+  <ul class="grid-2">
     {% for cert in certifications %}<li>{{ cert }}</li>{% endfor %}
   </ul>
   {% endif %}

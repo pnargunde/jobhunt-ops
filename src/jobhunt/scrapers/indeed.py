@@ -12,7 +12,13 @@ NAME = "indeed"
 base_url = "https://au.indeed.com"
 
 
-def search(page: Page, keyword: str, location: str, base_url: str = "https://au.indeed.com") -> list[JobListing]:
+def search(
+    page: Page,
+    keyword: str,
+    location: str,
+    base_url: str = "https://au.indeed.com",
+    date_range_days: int | None = None,
+) -> list[JobListing]:
     raise NotImplementedError(
         "Indeed scraper not yet implemented — see docs/implementation-plan.md Phase 5."
     )

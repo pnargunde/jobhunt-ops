@@ -12,7 +12,13 @@ NAME = "jora"
 base_url = "https://au.jora.com"
 
 
-def search(page: Page, keyword: str, location: str, base_url: str = "https://au.jora.com") -> list[JobListing]:
+def search(
+    page: Page,
+    keyword: str,
+    location: str,
+    base_url: str = "https://au.jora.com",
+    date_range_days: int | None = None,
+) -> list[JobListing]:
     raise NotImplementedError(
         "Jora scraper not yet implemented — see docs/implementation-plan.md Phase 2/5."
     )

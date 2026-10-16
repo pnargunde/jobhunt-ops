@@ -26,17 +26,66 @@ cover letter to a specific job, for a candidate whose ONLY source of truth is
 the profile JSON provided. You must not invent or embellish any employer,
 title, date, metric, skill, or achievement that is not present in the profile.
 You MAY select, reorder, and rephrase (for clarity/relevance/conciseness) the
-candidate's existing content to best match the job description.
+candidate's existing content to best match the job description. Make sure resume is ATS-friendly, with scannable bullets and a clear structure.
+
+The resume MUST include a "Projects" section with AT LEAST 3 entries (4 if
+good material exists), chosen for relevance to the job description, subject
+to this priority order:
+1. If the profile's own "projects" list has entries, prefer those.
+2. If it doesn't (or doesn't have enough), derive project entries from the
+   candidate's work experience: pick 3-4 of their most substantial, concrete
+   initiatives/achievements (from an experience's "achievements" or "bullets")
+   that are most relevant to this job, and present each as a distinct project
+   with its own name/title (you may phrase a short descriptive name for it,
+   e.g. "BSS Platform Migration" if the underlying bullet describes one).
+   Every fact in a derived project MUST already exist verbatim or
+   near-verbatim in that experience's bullets/achievements - rephrasing for
+   clarity/conciseness is fine, adding new claims is not.
+3. Only skip the 3-project minimum if the profile genuinely does not contain
+   enough distinct, relevant material to responsibly form 3 projects without
+   fabricating - never invent content just to hit the minimum.
+For every derived project, set "source_employer" to the employer it was drawn
+from (or null if pulled from the profile's own standalone "projects" list),
+so it stays traceable back to the source in trace.json. Each project must be
+presented as a single cohesive PARAGRAPH (5-7 sentences, not bullets) covering:
+the project's scope/context, the actions the candidate personally took, and
+the outcome/impact achieved - all facts must already exist verbatim or
+near-verbatim in the profile (rephrasing for flow is fine, adding new claims
+is not). Optionally include a short "tech_line" list of the technologies
+involved, drawn only from that experience's tech_stack or the project's own
+listed tech.
+
+Match the density, structure, and tone of a strong, THOROUGH professional
+resume that fills close to its full page budget rather than a sparse one - do
+not under-fill. Use every substantial fact available in the profile rather
+than over-condensing: a punchy 5-7 sentence summary weaving in the target role
+title and the candidate's strongest, most relevant real achievements; skills
+organized into 5-8 labeled categories (e.g. "Cloud & Infrastructure", "CI/CD &
+DevOps", "Languages & Scripting") presented under a "Core Competencies"
+heading instead of one flat list; and experience bullets that lead with an
+action verb and keep any real metrics/numbers already present in the profile
+(never add new ones). Give the most recent/relevant 1-2 roles 6-8 bullets
+each, and older/less relevant roles at least 4-5 bullets - draw generously
+from the profile's own "bullets"/"achievements" lists for that experience
+rather than compressing them down. Do not invent a category label's content -
+every item placed under a category must be a skill/tech_stack string that
+already exists in the profile.
 
 Return a JSON object with this exact shape:
 {
   "resume": {
-    "summary": string,                     // 2-3 sentence professional summary, based only on profile content
-    "skills": [string],                    // subset/reordering of profile skills most relevant to this job
-    "experiences": [
-      {"employer": string, "title": string, "start": string, "end": string, "bullets": [string]}
+    "headline": string,                    // short target-role subtitle for under the name, e.g. "Technical Lead — Cloud & Platform Engineering", grounded in the candidate's actual experience and the job title
+    "summary": string,                     // 5-7 sentence professional summary, based only on profile content
+    "skills_grouped": [
+      {"category": string, "items": [string]}  // 5-8 categories, each with 3-10 profile skills/tech_stack items, rendered as a "Core Competencies" table
     ],
-    "projects": [{"name": string, "bullets": [string]}],
+    "experiences": [
+      {"employer": string, "title": string, "start": string, "end": string, "bullets": [string]} // 6-8 bullets for the most recent/relevant 1-2 roles, 4-5 for older roles, drawn generously from profile experiences, rephrased for clarity/conciseness if needed, but never inventing new claims
+    ],
+    "projects": [
+      {"name": string, "tech_line": [string], "source_employer": string | null,
+       "summary": string}   // 5-7 sentence paragraph: scope, actions taken, outcome/impact - no bullets
+    ],
     "education": [{"institution": string, "qualification": string, "start": string, "end": string}],
     "certifications": [string]
   },
@@ -49,12 +98,23 @@ Return a JSON object with this exact shape:
 """
 
 
-def _select_content(profile: dict, job_title: str, company: str, jd_text: str, model: str) -> dict:
+def _select_content(
+    profile: dict,
+    job_title: str,
+    company: str,
+    jd_text: str,
+    model: str,
+    provider: str = "github_models",
+    api_key_env: str | None = None,
+) -> dict:
     user_prompt = (
         f"Candidate profile (source of truth, do not exceed this):\n{json.dumps(profile)}\n\n"
         f"Target job: {job_title} at {company}\n\nJob description:\n{jd_text}"
     )
-    return chat_completion_json(SELECT_SYSTEM_PROMPT, user_prompt, model=model, temperature=0.3)
+    return chat_completion_json(
+        SELECT_SYSTEM_PROMPT, user_prompt, model=model, temperature=0.3,
+        provider=provider, api_key_env=api_key_env,
+    )
 
 
 def _render_pdf(template_name: str, context: dict, out_path: Path) -> None:
@@ -95,12 +155,14 @@ def generate_documents(
     slug: str,
     model: str = "openai/gpt-4o-mini",
     max_pages: int = 3,
+    provider: str = "github_models",
+    api_key_env: str | None = None,
 ) -> dict:
     """Generate resume.pdf, cover_letter.pdf, and a trace.json sidecar for one job.
 
     Returns dict with resume_path, cover_letter_path, trace_path (all as str).
     """
-    selection = _select_content(profile, job_title, company, jd_text, model)
+    selection = _select_content(profile, job_title, company, jd_text, model, provider=provider, api_key_env=api_key_env)
     resume_data = selection["resume"]
     trace = selection.get("trace", [])
 
@@ -114,13 +176,33 @@ def generate_documents(
         resume_path,
     )
 
-    # Trim to max_pages by dropping lowest-priority bullets/experiences if needed.
+    # Trim to max_pages by dropping lowest-priority content if needed.
+    # Projects are a requested feature (min 2 entries) so they're protected
+    # until only 2 remain; experience bullets are trimmed first since resumes
+    # commonly compress older/less relevant roles before cutting projects
+    # entirely.
     attempts = 0
-    while _count_pdf_pages(resume_path) > max_pages and attempts < 4:
-        if resume_data.get("projects"):
+    while _count_pdf_pages(resume_path) > max_pages and attempts < 6:
+        experiences = resume_data.get("experiences", [])
+        projects = resume_data.get("projects", [])
+        trimmed_a_bullet = False
+        for exp in reversed(experiences):
+            if len(exp.get("bullets", [])) > 3:
+                exp["bullets"] = exp["bullets"][:-1]
+                trimmed_a_bullet = True
+                break
+        if trimmed_a_bullet:
+            attempts += 1
+            _render_pdf(
+                "resume.html.j2",
+                {"candidate_name": candidate_name, "contact_line": contact_line, **resume_data},
+                resume_path,
+            )
+            continue
+        if len(projects) > 2:
             resume_data["projects"].pop()
-        elif len(resume_data.get("experiences", [])) > 1:
-            resume_data["experiences"][-1]["bullets"] = resume_data["experiences"][-1]["bullets"][:2]
+        elif len(experiences) > 1:
+            experiences[-1]["bullets"] = experiences[-1]["bullets"][:2]
         else:
             break
         _render_pdf(
@@ -163,13 +245,21 @@ def generate_for_pending_jobs(
     min_score: int,
     model: str = "openai/gpt-4o-mini",
     max_pages: int = 3,
+    force: bool = False,
+    provider: str = "github_models",
+    api_key_env: str | None = None,
 ) -> int:
-    """Generate docs for every job with match_score >= min_score lacking a resume. Returns count generated."""
+    """Generate docs for every job with match_score >= min_score lacking a resume.
+
+    If force=True, regenerate even jobs that already have a resume_path
+    (e.g. after a template/prompt change).
+    Returns count generated.
+    """
     import re
 
     from jobhunt.db import get_jobs_for_docgen, set_generated_docs
 
-    rows = get_jobs_for_docgen(conn, min_score)
+    rows = get_jobs_for_docgen(conn, min_score, force=force)
     for row in rows:
         slug = re.sub(r"[^a-zA-Z0-9]+", "-", f"{row['company']}-{row['title']}").strip("-").lower()[:80]
         result = generate_documents(
@@ -183,6 +273,8 @@ def generate_for_pending_jobs(
             slug=slug,
             model=model,
             max_pages=max_pages,
+            provider=provider,
+            api_key_env=api_key_env,
         )
         set_generated_docs(conn, row["url"], result["resume_path"], result["cover_letter_path"])
     return len(rows)

@@ -72,15 +72,15 @@ Per user request, keep this option open without building it now:
 
 ## Data flow
 
-### Infrequent: `jobhunt profile build`
-- Input: raw resumes dropped in `profile/resumes/` (PDF/DOCX/TXT), plus any prior `my_profile.json`.
-- Parses text from each resume, sends to LLM to extract/merge structured data: skills, experiences (employer, title, dates, responsibilities, achievements — verbatim/faithful), projects, education, certifications.
-- Output: versioned `profile/my_profile.json` — the single knowledge base of truth used by scoring and doc generation. Never auto-invents content; only reorganizes/synthesizes what's present across resumes.
+### Infrequent: `jobhunt profile-build`
+- Input: `profile/ProfileDump.txt` — a single free-form career summary (professional summary, certifications, education, experience with tech stack/achievements per role) that the user maintains and updates over time, as the **primary source**. Optionally supplemented by additional resumes dropped in `profile/resumes/` (PDF/DOCX/TXT), plus any prior `my_profile.json` to merge against.
+- Parses text from the dump and any resumes, sends to LLM to extract/merge structured data: professional summary, skills, certifications, experiences (employer, title, dates, tech stack, responsibilities, achievements — verbatim/faithful), projects, education.
+- Output: versioned `profile/my_profile.json` — the single knowledge base of truth used by scoring and doc generation. Never auto-invents content; only reorganizes/synthesizes what's present in the source material.
 
 ### Daily: `jobhunt run-all` (or step-by-step)
 1. **search** — Playwright launches with a persistent browser context (cookies/session saved under `state/browser_profile/`). User logs into each portal once manually; subsequent runs reuse the session. Runs configured search queries per portal (`config/config.yaml`), extracts: url, title, company, location, salary (if listed), portal, posted/first_seen date, and full JD text. Upserts into SQLite `jobs` table keyed by `url` — new rows get `status='new'`, existing rows preserve `first_seen` and any manually-set `status` (e.g. `applied`, `rejected`, `ignored`).
 2. **score** — For jobs without a `matchScore` yet, sends JD text + `my_profile.json` to the LLM, which returns a 1-10 `matchScore` plus a short rationale (stored for transparency/debugging, not necessarily shown in the final report).
-3. **generate** — For jobs where `matchScore > 8` and no resume/cover letter yet generated: LLM selects and phrases only *existing* profile content (skills/experience/projects) relevant to that JD into the Jinja2 resume/cover-letter templates. Rendered via WeasyPrint to PDF, capped at 2-3 pages, ATS-friendly (semantic HTML, standard fonts, no tables/images/icons that break parsing). Output saved under `output/<date>/resumes/` and `output/<date>/cover_letters/`.
+3. **generate** — For jobs where `matchScore > 8` and no resume/cover letter yet generated: LLM selects and phrases only *existing* profile content (skills/experience/projects) relevant to that JD into the Jinja2 resume/cover-letter templates. Rendered via headless Chromium (Playwright `page.pdf()`) to PDF, capped at 2-3 pages, ATS-friendly (semantic HTML, standard fonts, no tables/images/icons that break parsing). Output saved under `output/<date>/resumes/` and `output/<date>/cover_letters/`.
 4. **report** — Dumps the required table: `url, first_seen, portal, title, company, status, location, salary, matchScore` as CSV and HTML, sorted by `matchScore` descending.
 5. **summary** — Single HTML/Markdown page listing all `matchScore > 8` jobs with links to their generated resume/cover letter PDFs — the "ready to apply" shortlist for the day.
 

@@ -52,6 +52,8 @@ class PortalConfig:
 @dataclass
 class LLMConfig:
     model: str = "openai/gpt-4o-mini"
+    provider: str = "github_models"    # github_models | openai | anthropic
+    api_key_env: str | None = None     # override which env var holds the API key
 
 
 @dataclass
@@ -119,7 +121,11 @@ def load_config(path: str | os.PathLike | None = None) -> JobHuntConfig:
     }
 
     llm_raw = raw.get("llm", {}) or {}
-    llm = LLMConfig(model=llm_raw.get("model", "openai/gpt-4o-mini"))
+    llm = LLMConfig(
+        model=llm_raw.get("model", "openai/gpt-4o-mini"),
+        provider=llm_raw.get("provider", "github_models"),
+        api_key_env=llm_raw.get("api_key_env"),
+    )
 
     output_raw = raw.get("output", {}) or {}
     output = OutputConfig(

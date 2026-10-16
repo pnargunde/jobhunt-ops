@@ -116,7 +116,12 @@ def get_jobs_needing_score(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     return conn.execute("SELECT * FROM jobs WHERE match_score IS NULL").fetchall()
 
 
-def get_jobs_for_docgen(conn: sqlite3.Connection, min_score: int) -> list[sqlite3.Row]:
+def get_jobs_for_docgen(conn: sqlite3.Connection, min_score: int, force: bool = False) -> list[sqlite3.Row]:
+    if force:
+        return conn.execute(
+            "SELECT * FROM jobs WHERE match_score >= ?",
+            (min_score,),
+        ).fetchall()
     return conn.execute(
         "SELECT * FROM jobs WHERE match_score >= ? AND resume_path IS NULL",
         (min_score,),
@@ -129,3 +134,12 @@ def get_all_jobs(conn: sqlite3.Connection) -> list[sqlite3.Row]:
 
 def get_job(conn: sqlite3.Connection, url: str) -> Optional[sqlite3.Row]:
     return conn.execute("SELECT * FROM jobs WHERE url = ?", (url,)).fetchone()
+
+
+def delete_jobs_by_portal(conn: sqlite3.Connection, portal: str) -> int:
+    """Remove all stored jobs for a given portal. Useful for discarding a
+    batch scraped with a since-fixed bug (e.g. selectors that produced empty
+    company/JD text) without touching other portals' data."""
+    cur = conn.execute("DELETE FROM jobs WHERE portal = ?", (portal,))
+    conn.commit()
+    return cur.rowcount

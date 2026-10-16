@@ -1,9 +1,14 @@
 """Build/update MyProfile — the structured knowledge base of skills, experience,
-projects, achievements, and education — from one or more resumes.
+projects, achievements, and education.
+
+Primary source: a single free-form career summary/dump file at
+profile/ProfileDump.txt (recommended — one file to keep updated over time).
+Optionally supplemented by additional resumes (.pdf/.docx/.txt/.md) dropped in
+profile/resumes/, which are merged in alongside the dump.
 
 This is intentionally a SEPARATE, infrequently-run step (see docs/architecture.md),
-not part of the daily run-all pipeline. Run it only when you add a new resume,
-skill, or project to profile/resumes/.
+not part of the daily run-all pipeline. Run it only when you update ProfileDump.txt
+or add a new skill/project/resume.
 """
 from __future__ import annotations
 
@@ -18,22 +23,28 @@ from jobhunt.llm import chat_completion_json
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RESUMES_DIR = REPO_ROOT / "profile" / "resumes"
+DEFAULT_PROFILE_DUMP_PATH = REPO_ROOT / "profile" / "ProfileDump.txt"
 DEFAULT_PROFILE_PATH = REPO_ROOT / "profile" / "my_profile.json"
 
 SYSTEM_PROMPT = """You are a careful, conservative resume-data extraction assistant.
-You will be given the raw text of one or more resumes belonging to the SAME person.
-Merge them into a single structured JSON profile capturing everything real and
-verifiable in the source text. Do NOT invent, embellish, or infer facts that are
-not stated or clearly implied by the text (no fabricated employers, titles, dates,
-metrics, or skills). If resumes disagree with each other (e.g. different dates for
-the same role), keep the most complete/recent version, and note the discrepancy in
-a "_conflicts" list rather than silently guessing.
+You will be given free-form career text (a career summary/dump and/or one or more
+resumes) belonging to the SAME person. Merge it all into a single structured JSON
+profile capturing everything real and verifiable in the source text. Do NOT invent,
+embellish, or infer facts that are not stated or clearly implied by the text (no
+fabricated employers, titles, dates, metrics, or skills). If sources disagree with
+each other (e.g. different dates for the same role), keep the most complete/recent
+version, and note the discrepancy in a "_conflicts" list rather than silently
+guessing.
 
 Return a JSON object with this exact shape:
 {
+  "professional_summary": string,
   "skills": [string],
+  "certifications": [string],
   "experiences": [
-    {"employer": string, "title": string, "start": string, "end": string, "bullets": [string]}
+    {"employer": string, "title": string, "start": string, "end": string,
+     "skills_deployed": [string], "tech_stack": [string], "bullets": [string],
+     "achievements": [string]}
   ],
   "projects": [
     {"name": string, "description": string, "technologies": [string], "bullets": [string]}
@@ -41,7 +52,6 @@ Return a JSON object with this exact shape:
   "education": [
     {"institution": string, "qualification": string, "start": string, "end": string}
   ],
-  "certifications": [string],
   "achievements": [string],
   "_conflicts": [string]
 }
@@ -77,27 +87,37 @@ def load_existing_profile(profile_path: Path = DEFAULT_PROFILE_PATH) -> dict | N
 
 def build_profile(
     resumes_dir: Path = DEFAULT_RESUMES_DIR,
+    profile_dump_path: Path = DEFAULT_PROFILE_DUMP_PATH,
     profile_path: Path = DEFAULT_PROFILE_PATH,
     model: str = "openai/gpt-4o-mini",
     force: bool = False,
 ) -> dict:
-    """Parse all resumes in resumes_dir and synthesize/merge into my_profile.json.
+    """Synthesize/merge profile/ProfileDump.txt (primary) plus any resumes in
+    resumes_dir (supplemental) into my_profile.json.
 
-    Returns the resulting profile dict. Raises FileNotFoundError if no resumes found.
+    Returns the resulting profile dict. Raises FileNotFoundError if neither a
+    profile dump file nor any resumes are found.
     """
+    sources: dict[str, str] = {}
+    if profile_dump_path.exists():
+        sources[profile_dump_path.name] = extract_text(profile_dump_path)
+
     resume_files = sorted(
         p for p in resumes_dir.glob("*") if p.suffix.lower() in (".pdf", ".docx", ".txt", ".md")
     )
-    if not resume_files:
+    for f in resume_files:
+        sources[f.name] = extract_text(f)
+
+    if not sources:
         raise FileNotFoundError(
-            f"No resumes found in {resumes_dir}. Drop your resume file(s) there and re-run."
+            f"No profile source found. Create {profile_dump_path} (recommended, a single "
+            f"career summary you keep updated) and/or drop resume file(s) into {resumes_dir}."
         )
 
     existing = None if force else load_existing_profile(profile_path)
 
-    resume_texts = {f.name: extract_text(f) for f in resume_files}
-    user_prompt_parts = ["Here are the resume(s) to merge into one profile:\n"]
-    for name, text in resume_texts.items():
+    user_prompt_parts = ["Here is the career source material to merge into one profile:\n"]
+    for name, text in sources.items():
         user_prompt_parts.append(f"--- {name} ---\n{text}\n")
     if existing:
         user_prompt_parts.append(
@@ -108,7 +128,7 @@ def build_profile(
 
     profile = chat_completion_json(SYSTEM_PROMPT, user_prompt, model=model)
     profile["_generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    profile["_source_files"] = list(resume_texts.keys())
+    profile["_source_files"] = list(sources.keys())
 
     profile_path.parent.mkdir(parents=True, exist_ok=True)
     profile_path.write_text(json.dumps(profile, indent=2), encoding="utf-8")

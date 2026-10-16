@@ -25,7 +25,9 @@ BROWSER_PROFILE_DIR = REPO_ROOT / "state" / "browser_profile"
 class PortalScraper(Protocol):
     name: str
 
-    def search(self, page: Page, keyword: str, location: str) -> list[JobListing]:
+    def search(
+        self, page: Page, keyword: str, location: str, base_url: str, date_range_days: int | None = None
+    ) -> list[JobListing]:
         ...
 
 
