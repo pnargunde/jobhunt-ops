@@ -7,6 +7,16 @@ Supported providers (selected via config.llm.provider, default "github_models"):
   override). Model ids look like "gpt-4o", "gpt-4.1", etc.
 - "anthropic": direct Anthropic API. Auth via ANTHROPIC_API_KEY env var (or
   api_key_env override). Model ids look like "claude-3-5-sonnet-20241022".
+- "google_genai": Google's Gemini API. Auth via GOOGLE_API_KEY env var (or
+  api_key_env override). Model ids look like "gemini-2.5-flash-lite".
+- "bedrock": AWS Bedrock. No single flat API key - auth via the standard AWS
+  credential chain (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/AWS_SESSION_TOKEN
+  env vars, ~/.aws/credentials, or an IAM role) plus AWS_REGION. Model ids
+  look like "anthropic.claude-3-5-sonnet-20241022-v2:0".
+
+All API keys/secrets are read from environment variables, populated from a
+gitignored .env file at the repo root (see .env.example) via python-dotenv,
+loaded once in config.py - never hardcoded or passed on the CLI.
 
 Rationale: GitHub Models is convenient (no separate key, no billing setup) but
 rate-limited and its model roster is a subset of what each vendor offers
@@ -16,8 +26,14 @@ module lets you do that with just a config change, no code change, and every
 call site (matcher.py, docgen.py) is unaffected since they only use the
 provider-agnostic chat_completion_json() function.
 
-Kept as a small, dependency-light wrapper (stdlib `urllib` + `subprocess`) so
-the package doesn't force an extra HTTP client dependency just for this.
+Request/response plumbing (HTTP calls, retries/backoff, provider-specific
+payload shapes) is delegated to LangChain's chat model classes
+(`langchain_openai.ChatOpenAI`, `langchain_anthropic.ChatAnthropic`,
+`langchain_google_genai.ChatGoogleGenerativeAI`, `langchain_aws.ChatBedrockConverse`)
+rather than hand-rolled here - this buys us battle-tested retry/backoff,
+timeout handling, and a consistent message/response interface across
+providers, while `gh`-CLI token resolution (GitHub Models has no first-class
+LangChain integration) stays custom below.
 """
 from __future__ import annotations
 
@@ -25,21 +41,26 @@ import json
 import os
 import shutil
 import subprocess
-import time
-import urllib.error
-import urllib.request
-from dataclasses import dataclass
 from pathlib import Path
 
-GITHUB_MODELS_ENDPOINT = "https://models.github.ai/inference/chat/completions"
-OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions"
-ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages"
-ANTHROPIC_VERSION = "2023-06-01"
+from langchain_anthropic import ChatAnthropic
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
 
+# GitHub Models exposes an OpenAI-compatible Chat Completions API at this
+# base URL, so it's served via ChatOpenAI with a custom base_url rather than
+# a dedicated LangChain integration.
+GITHUB_MODELS_BASE_URL = "https://models.github.ai/inference"
+
+# Providers authenticated with a single flat API key/token, resolved via
+# resolve_token() below. Bedrock is deliberately excluded - it has no single
+# "key", it uses the AWS SDK's own credential chain (see _build_chat_model).
 DEFAULT_API_KEY_ENV = {
     "github_models": "GITHUB_MODELS_TOKEN",
     "openai": "OPENAI_API_KEY",
     "anthropic": "ANTHROPIC_API_KEY",
+    "google_genai": "GOOGLE_API_KEY",
 }
 
 # Common Windows install locations for the GitHub CLI, used as a fallback when
@@ -60,12 +81,6 @@ class LLMAuthError(RuntimeError):
 
 class LLMRequestError(RuntimeError):
     pass
-
-
-@dataclass
-class LLMResponse:
-    content: str
-    raw: dict
 
 
 def _token_from_env(env_var: str) -> str | None:
@@ -114,8 +129,12 @@ def resolve_token(provider: str = "github_models", api_key_env: str | None = Non
 
     - github_models: api_key_env (default GITHUB_MODELS_TOKEN) env var first,
       else `gh auth token`.
-    - openai / anthropic: api_key_env (default OPENAI_API_KEY / ANTHROPIC_API_KEY)
-      env var only - these providers have no CLI-based fallback.
+    - openai / anthropic / google_genai: api_key_env (default
+      OPENAI_API_KEY / ANTHROPIC_API_KEY / GOOGLE_API_KEY) env var only -
+      these providers have no CLI-based fallback.
+    - bedrock: not supported here - it has no single flat key, see
+      _build_chat_model, which uses the AWS SDK's own credential chain
+      instead of calling this function.
     """
     env_var = api_key_env or DEFAULT_API_KEY_ENV.get(provider, "GITHUB_MODELS_TOKEN")
     token = _token_from_env(env_var)
@@ -148,145 +167,72 @@ def resolve_token(provider: str = "github_models", api_key_env: str | None = Non
     )
 
 
-def _post_with_retry(
-    url: str,
-    headers: dict[str, str],
-    payload: dict,
-    timeout: int,
-    max_retries: int,
-) -> dict:
-    data = json.dumps(payload).encode("utf-8")
-    attempt = 0
-    while True:
-        req = urllib.request.Request(url, data=data, method="POST", headers=headers)
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            body = exc.read().decode("utf-8", errors="replace")
-            retryable = exc.code == 429 or exc.code >= 500
-            if not retryable or attempt >= max_retries:
-                raise LLMRequestError(f"{url} error {exc.code}: {body}") from exc
-            wait_seconds = _retry_wait_seconds(exc, attempt)
-            attempt += 1
-            time.sleep(wait_seconds)
-        except urllib.error.URLError as exc:
-            if attempt >= max_retries:
-                raise LLMRequestError(f"Request to {url} failed: {exc}") from exc
-            attempt += 1
-            time.sleep(2**attempt)
-
-
-def _openai_style_completion(
-    endpoint: str,
-    token: str,
-    messages: list[dict[str, str]],
+def _build_chat_model(
+    provider: str,
     model: str,
+    api_key_env: str | None,
     temperature: float,
-    response_format_json: bool,
     timeout: int,
     max_retries: int,
-) -> LLMResponse:
-    """Shared request/response shape for GitHub Models and OpenAI (both expose
-    an OpenAI-compatible chat/completions API)."""
-    payload: dict = {"model": model, "messages": messages, "temperature": temperature}
-    if response_format_json:
-        payload["response_format"] = {"type": "json_object"}
+) -> BaseChatModel:
+    """Construct the LangChain chat model for the given provider.
 
-    headers = {
-        "Authorization": "Bearer " + token,
-        "Content-Type": "application/json",
-        "Accept": "application/vnd.github+json" if "github" in endpoint else "application/json",
-    }
-    raw = _post_with_retry(endpoint, headers, payload, timeout, max_retries)
-    try:
-        content = raw["choices"][0]["message"]["content"]
-    except (KeyError, IndexError) as exc:
-        raise LLMRequestError(f"Unexpected response shape from {endpoint}: {raw}") from exc
-    return LLMResponse(content=content, raw=raw)
-
-
-def _anthropic_completion(
-    token: str,
-    system_prompt: str,
-    user_prompt: str,
-    model: str,
-    temperature: float,
-    response_format_json: bool,
-    timeout: int,
-    max_retries: int,
-    max_tokens: int = 4096,
-) -> LLMResponse:
-    """Anthropic's Messages API: system prompt is a separate top-level field,
-    not a message, and there's no first-class JSON response mode - so when
-    JSON is required we append an explicit instruction (Claude follows this
-    reliably in practice)."""
-    system = system_prompt
-    if response_format_json:
-        system += "\n\nRespond with ONLY a single valid JSON object. No markdown code fences, no commentary."
-
-    payload = {
-        "model": model,
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "system": system,
-        "messages": [{"role": "user", "content": user_prompt}],
-    }
-    headers = {
-        "x-api-key": token,
-        "anthropic-version": ANTHROPIC_VERSION,
-        "Content-Type": "application/json",
-    }
-    raw = _post_with_retry(ANTHROPIC_ENDPOINT, headers, payload, timeout, max_retries)
-    try:
-        content = raw["content"][0]["text"]
-    except (KeyError, IndexError) as exc:
-        raise LLMRequestError(f"Unexpected response shape from Anthropic: {raw}") from exc
-    return LLMResponse(content=content, raw=raw)
-
-
-def chat_completion(
-    messages: list[dict[str, str]],
-    model: str = "openai/gpt-4o-mini",
-    temperature: float = 0.2,
-    response_format_json: bool = False,
-    timeout: int = 60,
-    max_retries: int = 5,
-    provider: str = "github_models",
-    api_key_env: str | None = None,
-) -> LLMResponse:
-    """Call the configured LLM provider's chat completion endpoint.
-
-    Raises LLMAuthError/LLMRequestError. Retries with exponential backoff on
-    HTTP 429 (rate limited) and transient 5xx errors, honoring a Retry-After
-    header if the API sends one - GitHub Models' free/included tier in
-    particular has fairly low per-minute rate limits, so this is expected to
-    trigger occasionally on batch runs (e.g. scoring 30 jobs back-to-back)
-    rather than indicating anything is broken.
-
-    For Anthropic, `messages` must contain exactly one system message
-    (optional) and one user message - use chat_completion_json() instead,
-    which handles this translation for you.
+    GitHub Models and OpenAI both speak the OpenAI Chat Completions wire
+    format, so both go through ChatOpenAI (GitHub Models via a custom
+    base_url); Anthropic and Google Gemini have their own LangChain
+    integrations. Bedrock uses the AWS SDK's own credential chain (env vars,
+    ~/.aws/credentials, or an IAM role) rather than resolve_token() - there's
+    no single flat API key to resolve. Retry/backoff on rate limits and
+    transient 5xx errors, and request timeouts, are handled by the underlying
+    provider SDK that each LangChain class wraps - no hand-rolled retry loop
+    needed here.
     """
-    token = resolve_token(provider, api_key_env)
+    if provider == "bedrock":
+        from langchain_aws import ChatBedrockConverse
 
-    if provider == "anthropic":
-        system_prompt = ""
-        user_prompt = ""
-        for m in messages:
-            if m["role"] == "system":
-                system_prompt = m["content"]
-            elif m["role"] == "user":
-                user_prompt = m["content"]
-        return _anthropic_completion(
-            token, system_prompt, user_prompt, model, temperature,
-            response_format_json, timeout, max_retries,
+        return ChatBedrockConverse(
+            model=model,
+            temperature=temperature,
+            region_name=os.environ.get("AWS_REGION"),
         )
 
-    endpoint = GITHUB_MODELS_ENDPOINT if provider == "github_models" else OPENAI_ENDPOINT
-    return _openai_style_completion(
-        endpoint, token, messages, model, temperature, response_format_json, timeout, max_retries,
-    )
+    if provider == "anthropic":
+        return ChatAnthropic(
+            model=model,
+            api_key=resolve_token(provider, api_key_env),
+            temperature=temperature,
+            timeout=timeout,
+            max_retries=max_retries,
+            max_tokens=4096,
+        )
+
+    if provider == "google_genai":
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        return ChatGoogleGenerativeAI(
+            model=model,
+            google_api_key=resolve_token(provider, api_key_env),
+            temperature=temperature,
+            timeout=timeout,
+            max_retries=max_retries,
+        )
+
+    kwargs: dict = {
+        "model": model,
+        "api_key": resolve_token(provider, api_key_env),
+        "temperature": temperature,
+        "timeout": timeout,
+        "max_retries": max_retries,
+    }
+    if provider == "github_models":
+        kwargs["base_url"] = GITHUB_MODELS_BASE_URL
+    return ChatOpenAI(**kwargs)
+
+
+# Providers that support OpenAI-style structured JSON output
+# (response_format={"type": "json_object"}). Others get an explicit
+# "respond with JSON only" instruction appended to the system prompt instead.
+_JSON_MODE_PROVIDERS = {"github_models", "openai"}
 
 
 def chat_completion_json(
@@ -296,24 +242,48 @@ def chat_completion_json(
     temperature: float = 0.2,
     provider: str = "github_models",
     api_key_env: str | None = None,
+    timeout: int = 60,
+    max_retries: int = 5,
 ) -> dict:
     """Convenience helper for prompts that expect a JSON object back.
 
-    This is the entry point matcher.py and docgen.py use - it's fully
-    provider-agnostic, so switching providers/models is a config change only.
+    This is the entry point matcher.py, docgen.py, and profile_builder.py use
+    - it's fully provider-agnostic, so switching providers/models is a config
+    change only (config.llm.provider: github_models | openai | anthropic |
+    google_genai | bedrock). Internally dispatches to a LangChain chat model
+    per provider (see _build_chat_model), so request/response plumbing and
+    retry/backoff are LangChain's, not hand-rolled.
     """
-    response = chat_completion(
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        model=model,
-        temperature=temperature,
-        response_format_json=True,
-        provider=provider,
-        api_key_env=api_key_env,
-    )
-    content = response.content.strip()
+    effective_system_prompt = system_prompt
+    extra_kwargs: dict = {}
+    if provider in _JSON_MODE_PROVIDERS:
+        extra_kwargs["response_format"] = {"type": "json_object"}
+    else:
+        # Anthropic, Google Gemini, and Bedrock don't share OpenAI's
+        # response_format kwarg - fall back to an explicit instruction
+        # (all three follow this reliably in practice).
+        effective_system_prompt += (
+            "\n\nRespond with ONLY a single valid JSON object. No markdown code fences, no commentary."
+        )
+
+    chat_model = _build_chat_model(provider, model, api_key_env, temperature, timeout, max_retries)
+    messages = [SystemMessage(content=effective_system_prompt), HumanMessage(content=user_prompt)]
+    try:
+        if extra_kwargs:
+            response = chat_model.invoke(messages, **extra_kwargs)
+        else:
+            response = chat_model.invoke(messages)
+    except Exception as exc:  # LangChain surfaces provider SDK errors (auth, rate limit, etc.) as-is
+        raise LLMRequestError(f"LLM request to provider '{provider}' (model '{model}') failed: {exc}") from exc
+
+    content = response.content
+    if isinstance(content, list):
+        # Some providers (e.g. Anthropic) may return a list of content blocks
+        # rather than a plain string.
+        content = "".join(
+            part.get("text", "") if isinstance(part, dict) else str(part) for part in content
+        )
+    content = content.strip()
     # Anthropic (and occasionally others) may wrap JSON in a markdown code
     # fence despite instructions - strip it defensively before parsing.
     if content.startswith("```"):
@@ -321,4 +291,7 @@ def chat_completion_json(
         if content.startswith("json"):
             content = content[4:]
         content = content.strip()
-    return json.loads(content)
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise LLMRequestError(f"LLM response was not valid JSON: {content!r}") from exc

@@ -72,6 +72,15 @@ def upsert_job(conn: sqlite3.Connection, listing: JobListing) -> None:
 
     Never overwrites `status` or `first_seen` on existing rows, so manual
     status changes (applied/interviewing/rejected/ignored) survive re-runs.
+
+    jd_text is only overwritten when the incoming listing actually has one.
+    This matters because the same job URL can surface under multiple
+    configured search keywords in a single `search` run - cli.py only
+    fetches jd_text for a listing when the existing DB row doesn't have one
+    yet, so a later keyword's pass re-upserts the same job with
+    listing.jd_text left at its "" default. Without the NULLIF/COALESCE
+    guard below, that blank value would clobber the jd_text already fetched
+    during an earlier keyword's pass in the same run.
     """
     now = _now()
     conn.execute(
@@ -83,7 +92,7 @@ def upsert_job(conn: sqlite3.Connection, listing: JobListing) -> None:
             company = excluded.company,
             location = excluded.location,
             salary = excluded.salary,
-            jd_text = excluded.jd_text,
+            jd_text = COALESCE(NULLIF(excluded.jd_text, ''), jobs.jd_text),
             last_seen = excluded.last_seen
         """,
         {**asdict(listing), "now": now},

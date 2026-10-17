@@ -18,11 +18,18 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = REPO_ROOT / "config" / "config.yaml"
 EXAMPLE_CONFIG_PATH = REPO_ROOT / "config" / "config.example.yaml"
 ENV_VAR = "JOBHUNT_CONFIG"
+
+# Load .env (API keys/secrets) once at import time, before any config/LLM code
+# runs. Real values live only in the gitignored .env; see .env.example for
+# the full list of recognized keys per provider. Does not override variables
+# already set in the shell environment (override=False, the default).
+load_dotenv(REPO_ROOT / ".env")
 
 
 @dataclass
@@ -52,8 +59,8 @@ class PortalConfig:
 @dataclass
 class LLMConfig:
     model: str = "openai/gpt-4o-mini"
-    provider: str = "github_models"    # github_models | openai | anthropic
-    api_key_env: str | None = None     # override which env var holds the API key
+    provider: str = "github_models"    # github_models | openai | anthropic | google_genai | bedrock
+    api_key_env: str | None = None     # override which env var holds the API key (not used by bedrock)
 
 
 @dataclass

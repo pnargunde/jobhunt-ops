@@ -54,10 +54,32 @@ def _load_profile_or_exit() -> dict:
     return profile
 
 
+def _require_header_fields(profile: dict) -> tuple[str, str]:
+    """Pull candidate_name/contact_line from the profile - extracted by
+    `profile-build` from your ProfileDump.txt/resume text - rather than
+    requiring them on every `generate`/`run-all` invocation."""
+    candidate_name = profile.get("candidate_name")
+    contact_line = profile.get("contact_line")
+    if not candidate_name or not contact_line:
+        rprint(
+            "[red]candidate_name/contact_line not found in the profile.[/red] Make sure your "
+            "full name and contact details (email/phone/location) appear in "
+            "profile/ProfileDump.txt (or a resume), then re-run [bold]jobhunt profile-build[/bold]."
+        )
+        raise typer.Exit(code=1)
+    return candidate_name, contact_line
+
+
 @app.command("profile-build")
 def profile_build(
     force: bool = typer.Option(False, "--force", help="Rebuild from scratch, ignoring existing profile."),
     model: Optional[str] = typer.Option(None, help="Override the configured LLM model."),
+    provider: Optional[str] = typer.Option(
+        None, help="Override the configured LLM provider: github_models | openai | anthropic | google_genai | bedrock."
+    ),
+    api_key_env: Optional[str] = typer.Option(
+        None, "--api-key-env", help="Override which env var holds the API key for the chosen provider."
+    ),
     config_path: Optional[str] = typer.Option(None, "--config", envvar="JOBHUNT_CONFIG"),
 ) -> None:
     """Build/update MyProfile from profile/ProfileDump.txt (primary source, one file
@@ -67,10 +89,21 @@ def profile_build(
     skill/project/resume. It is intentionally NOT part of `run-all`.
     """
     cfg = load_config(config_path)
-    profile = profile_module.build_profile(model=model or cfg.llm.model, force=force)
+    profile = profile_module.build_profile(
+        model=model or cfg.llm.model,
+        provider=provider or cfg.llm.provider,
+        api_key_env=api_key_env or cfg.llm.api_key_env,
+        force=force,
+    )
     rprint(f"[green]Profile built/updated:[/green] {profile_module.DEFAULT_PROFILE_PATH}")
     rprint(f"Skills: {len(profile.get('skills', []))}, Experiences: {len(profile.get('experiences', []))}, "
            f"Projects: {len(profile.get('projects', []))}")
+    if not profile.get("candidate_name") or not profile.get("contact_line"):
+        rprint(
+            "[yellow]Couldn't find a name/contact details in the source text.[/yellow] Make sure "
+            "your full name and contact details (email/phone/location) appear in "
+            "profile/ProfileDump.txt (or a resume) before running `generate`."
+        )
     if profile.get("_conflicts"):
         rprint(f"[yellow]Conflicts flagged for review:[/yellow] {profile['_conflicts']}")
 
@@ -150,7 +183,7 @@ def score(
     config_path: Optional[str] = typer.Option(None, "--config", envvar="JOBHUNT_CONFIG"),
     model: Optional[str] = typer.Option(None, help="Override the configured LLM model."),
     provider: Optional[str] = typer.Option(
-        None, help="Override the configured LLM provider: github_models | openai | anthropic."
+        None, help="Override the configured LLM provider: github_models | openai | anthropic | google_genai | bedrock."
     ),
     api_key_env: Optional[str] = typer.Option(
         None, "--api-key-env", help="Override which env var holds the API key for the chosen provider."
@@ -172,12 +205,10 @@ def score(
 
 @app.command()
 def generate(
-    candidate_name: str = typer.Option(..., help="Your full name for the resume/cover letter header."),
-    contact_line: str = typer.Option(..., help="e.g. 'email@example.com | +61 4xx xxx xxx | Sydney, NSW'"),
     config_path: Optional[str] = typer.Option(None, "--config", envvar="JOBHUNT_CONFIG"),
     model: Optional[str] = typer.Option(None, help="Override the configured LLM model."),
     provider: Optional[str] = typer.Option(
-        None, help="Override the configured LLM provider: github_models | openai | anthropic."
+        None, help="Override the configured LLM provider: github_models | openai | anthropic | google_genai | bedrock."
     ),
     api_key_env: Optional[str] = typer.Option(
         None, "--api-key-env", help="Override which env var holds the API key for the chosen provider."
@@ -186,9 +217,14 @@ def generate(
         False, "--force", help="Regenerate even jobs that already have a resume (e.g. after a template/prompt change)."
     ),
 ) -> None:
-    """Generate tailored resume + cover letter PDFs for jobs above the matchScore threshold."""
+    """Generate tailored resume + cover letter HTML files (open and print/"Save as PDF" manually) for jobs above the matchScore threshold.
+
+    candidate_name/contact_line are extracted automatically by `profile-build`
+    from your ProfileDump.txt/resume text, not passed as flags here.
+    """
     cfg = load_config(config_path)
     profile = _load_profile_or_exit()
+    candidate_name, contact_line = _require_header_fields(profile)
     output_dir = _output_dir_for_today()
     with db_module.connect() as conn:
         count = docgen_module.generate_for_pending_jobs(
@@ -271,17 +307,16 @@ def purge(
 
 @app.command("run-all")
 def run_all(
-    candidate_name: str = typer.Option(..., help="Your full name for the resume/cover letter header."),
-    contact_line: str = typer.Option(..., help="e.g. 'email@example.com | +61 4xx xxx xxx | Sydney, NSW'"),
     config_path: Optional[str] = typer.Option(None, "--config", envvar="JOBHUNT_CONFIG"),
 ) -> None:
     """Run the full daily pipeline: search -> score -> generate -> report -> summary.
 
-    Does NOT include `profile-build` (run that separately/infrequently).
+    Does NOT include `profile-build` (run that separately/infrequently;
+    candidate_name/contact_line are read from the profile it writes).
     """
     search(portal=None, config_path=config_path)
     score(config_path=config_path, model=None)
-    generate(candidate_name=candidate_name, contact_line=contact_line, config_path=config_path, model=None)
+    generate(config_path=config_path, model=None)
     report(config_path=config_path)
     summary(config_path=config_path)
 

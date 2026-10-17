@@ -44,8 +44,11 @@ portals:
 
 llm:
   model: "openai/gpt-4o-mini"    # model id (format depends on provider - see below)
-  provider: "github_models"      # github_models | openai | anthropic
+  provider: "github_models"      # github_models | openai | anthropic | google_genai | bedrock
   # api_key_env: "OPENAI_API_KEY"  # optional: override which env var holds the API key
+  #
+  # All API keys/secrets below go in a gitignored .env file at the repo root
+  # (copy .env.example to .env and fill in real values) - never in this file.
   #
   # github_models (default): free/included tier, auth via `gh auth token`
   #   (falls back to GITHUB_MODELS_TOKEN env var). Model ids look like
@@ -56,6 +59,14 @@ llm:
   # anthropic: direct Anthropic API - often strong for long-form writing like
   #   resumes/cover letters. Requires ANTHROPIC_API_KEY env var (or
   #   api_key_env override). Model ids look like "claude-3-5-sonnet-20241022".
+  # google_genai: Google's Gemini API - cheapest paid option. Requires
+  #   GOOGLE_API_KEY env var (or api_key_env override). Model ids look like
+  #   "gemini-2.5-flash-lite", "gemini-2.0-flash".
+  # bedrock: AWS Bedrock - no single API key; uses the standard AWS
+  #   credential chain (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/
+  #   AWS_SESSION_TOKEN env vars, ~/.aws/credentials, or an IAM role) plus
+  #   AWS_REGION. Model ids look like "anthropic.claude-3-5-sonnet-20241022-v2:0",
+  #   "amazon.nova-micro-v1:0".
 
 output:
   report_formats: [csv, html]

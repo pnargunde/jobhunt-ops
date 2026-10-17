@@ -68,8 +68,10 @@ future headless runs.
 
 ```powershell
 # Recommended: maintain one file, profile\ProfileDump.txt, with your full career
-# summary (roles, tech stack, achievements, certifications, education). Update it
-# whenever you gain a new skill/project, then re-run:
+# summary (name, contact details, roles, tech stack, achievements, certifications,
+# education). Make sure your name and contact info (email/phone/location) appear
+# somewhere in it - they're extracted automatically for the resume/cover-letter
+# header. Update the file whenever you gain a new skill/project, then re-run:
 jobhunt profile-build
 
 # Optional: you can still supplement with additional resume files
@@ -82,7 +84,7 @@ This is intentionally **separate** from the daily pipeline below.
 ## Daily run
 
 ```powershell
-jobhunt run-all --candidate-name "Jane Smith" --contact-line "jane@example.com | +61 4xx xxx xxx | Sydney NSW"
+jobhunt run-all
 ```
 
 Or step by step:
@@ -90,15 +92,15 @@ Or step by step:
 ```powershell
 jobhunt search
 jobhunt score
-jobhunt generate --candidate-name "Jane Smith" --contact-line "jane@example.com | +61 4xx xxx xxx | Sydney NSW"
+jobhunt generate
 jobhunt report
 jobhunt summary
 ```
 
 Outputs land in `output/<YYYY-MM-DD>/`:
 - `report.csv` / `report.html` — url, first_seen, portal, title, company, status, location, salary, matchScore
-- `resumes/<company>-<title>.pdf` and `.trace.json` (audit trail of what profile content each bullet came from)
-- `cover_letters/<company>-<title>.pdf`
+- `resumes/<company>-<title>.html` and `.trace.json` (audit trail of what profile content each bullet came from) — open in a browser and print/"Save as PDF" when ready to apply
+- `cover_letters/<company>-<title>.html` — same, print/"Save as PDF" manually
 - `summary.html` — single page of all matchScore > threshold jobs, ready to apply
 
 ## Manually track applications

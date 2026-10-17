@@ -21,6 +21,12 @@
   }
   @page { size: A4; margin: 16mm 16mm; }
   body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: var(--ink); line-height: 1.32; }
+  /* Justified body copy (summary, project descriptions, experience bullets)
+     for a tidier, more traditional-resume look when printed/exported to PDF.
+     text-justify: inter-word avoids the ugly stretched inter-letter spacing
+     some browsers default to; hyphens: auto softens the ragged right edge
+     justify can otherwise cause with narrow columns/long technical terms. */
+  p, .entry ul li { text-align: justify; text-justify: inter-word; hyphens: auto; -webkit-hyphens: auto; }
   h1 { font-size: 20pt; margin: 0 0 1pt 0; color: var(--navy); }
   .headline { font-size: 11pt; color: var(--accent); font-weight: bold; margin-bottom: 6pt; }
   .contact { font-size: 9.5pt; color: var(--muted); margin-bottom: 8pt; }
@@ -42,9 +48,11 @@
   .competencies-table tr:not(:last-child) td { border-bottom: 0.5px solid #e3e8ef; }
   /* Certifications: 2-column grid. Items still appear once each in normal
      DOM/reading order, so ATS text extraction (which reads sequentially,
-     not by visual position) is unaffected. */
+     not by visual position) is unaffected. Left-aligned, not justified -
+     these are short single-line labels, not prose, so justifying them would
+     just stretch awkward gaps between a couple of words. */
   .grid-2 { display: flex; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
-  .grid-2 li { width: 50%; box-sizing: border-box; padding: 1pt 8pt 1pt 0; }
+  .grid-2 li { width: 50%; box-sizing: border-box; padding: 1pt 8pt 1pt 0; text-align: left; }
   .project-tech { font-size: 9.3pt; color: var(--accent); margin-top: 1pt; }
 </style>
 </head>
@@ -109,6 +117,18 @@
   <ul class="grid-2">
     {% for cert in certifications %}<li>{{ cert }}</li>{% endfor %}
   </ul>
+  {% endif %}
+
+  {% if technical_skills %}
+  <h2>Technical Skills</h2>
+  <table class="competencies-table">
+    {% for group in technical_skills %}
+    <tr>
+      <td class="cat">{{ group.area }}</td>
+      <td>{{ group['skills'] | join(", ") }}</td>
+    </tr>
+    {% endfor %}
+  </table>
   {% endif %}
 </body>
 </html>

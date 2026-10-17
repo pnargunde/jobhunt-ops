@@ -38,8 +38,14 @@ guessing.
 
 Return a JSON object with this exact shape:
 {
+  "candidate_name": string,       // the candidate's full name, as it appears in the source text
+  "title_line": string,             // a single line combining contact details and urls present
+                                   // in the source text (e.g. email, phone, location, linkedin url), in the
+                                   // style "email@example.com | +61 4xx xxx xxx | Sydney, NSW | linkedin.com/in/username" -
+                                   // use "|" as the separator; omit any piece not present, don't invent one
   "professional_summary": string,
-  "skills": [string],
+  "technicalskills": [string],
+  "core competencies": [string],
   "certifications": [string],
   "experiences": [
     {"employer": string, "title": string, "start": string, "end": string,
@@ -49,8 +55,8 @@ Return a JSON object with this exact shape:
   "projects": [
     {"name": string, "description": string, "technologies": [string], "bullets": [string]}
   ],
-  "education": [
-    {"institution": string, "qualification": string, "start": string, "end": string}
+  "education and certifications": [
+    {"institution": string, "qualification": string, "start": string, "end": string},
   ],
   "achievements": [string],
   "_conflicts": [string]
@@ -90,10 +96,18 @@ def build_profile(
     profile_dump_path: Path = DEFAULT_PROFILE_DUMP_PATH,
     profile_path: Path = DEFAULT_PROFILE_PATH,
     model: str = "openai/gpt-4o-mini",
+    provider: str = "github_models",
+    api_key_env: str | None = None,
     force: bool = False,
 ) -> dict:
     """Synthesize/merge profile/ProfileDump.txt (primary) plus any resumes in
     resumes_dir (supplemental) into my_profile.json.
+
+    candidate_name/contact_line (used later by `generate` for the resume/
+    cover letter header) are extracted by the LLM from the source text
+    itself (see SYSTEM_PROMPT) - make sure your name and contact details
+    (email/phone/location) appear somewhere in profile/ProfileDump.txt or a
+    resume so they're picked up.
 
     Returns the resulting profile dict. Raises FileNotFoundError if neither a
     profile dump file nor any resumes are found.
@@ -126,9 +140,19 @@ def build_profile(
         )
     user_prompt = "\n".join(user_prompt_parts)
 
-    profile = chat_completion_json(SYSTEM_PROMPT, user_prompt, model=model)
+    profile = chat_completion_json(
+        SYSTEM_PROMPT, user_prompt, model=model, provider=provider, api_key_env=api_key_env,
+    )
     profile["_generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     profile["_source_files"] = list(sources.keys())
+
+    # If this pass didn't find a name/contact line (e.g. source text omitted
+    # them) but a previous run did, keep the previously extracted value
+    # rather than losing it.
+    if not profile.get("candidate_name") and existing:
+        profile["candidate_name"] = existing.get("candidate_name")
+    if not profile.get("contact_line") and existing:
+        profile["contact_line"] = existing.get("contact_line")
 
     profile_path.parent.mkdir(parents=True, exist_ok=True)
     profile_path.write_text(json.dumps(profile, indent=2), encoding="utf-8")

@@ -6,6 +6,7 @@ profile/resumes/*
 profile/ProfileDump.txt
 profile/my_profile.json
 config/config.yaml
+.env
 
 # Python
 .venv/

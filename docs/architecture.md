@@ -20,7 +20,7 @@ It is **not** a Copilot CLI skill/agent and is not invoked through this chat ses
 | Playwright (browser automation, logged-in session) | LinkedIn/Seek/Indeed/Jora block naive scraping (CAPTCHAs, login walls, anti-bot). Using a **persistent authenticated browser profile** (user logs in manually once) is the most reliable way to read search results without fighting bot detection. User has explicitly accepted the fragility/ToS risk tradeoff. |
 | GitHub Models API for LLM calls | User has GitHub Copilot access. Auth resolved automatically via `gh auth token`, falling back to a `GITHUB_MODELS_TOKEN` env var if the `gh` CLI isn't available/authenticated. Avoids needing a separate paid API key. |
 | SQLite for state | Jobs must be deduped across daily runs (keyed by URL) and retain `first_seen`/`status` history. A local file DB is simplest — no server, easy backup, easy to inspect. |
-| HTML templates → PDF (Playwright/Chromium `page.pdf()`) | User wants resume/cover letter templates as HTML "ready to convert to PDF as required." Originally planned via WeasyPrint, but WeasyPrint requires GTK/Pango/Cairo system libraries that are painful to install on Windows. Since Playwright (Chromium) is already a project dependency for scraping, reusing its headless browser's built-in `page.pdf()` renders the same Jinja2-templated HTML+CSS to PDF with zero extra system dependencies beyond `playwright install chromium`, and produces real selectable text (ATS-friendly), not rasterized images. |
+| HTML templates, printed to PDF by the user (Playwright/Chromium `page.pdf()` used only internally to measure page count) | User wants resume/cover letter templates as HTML "ready to convert to PDF as required," generated as `.html` files the user opens and prints/"Save as PDF" manually — giving them full control over final pagination/styling. Playwright (already a project dependency for scraping) is still used internally to render a throwaway PDF purely to count pages for the auto-trim-to-`max_pages` loop; that PDF itself is never saved as output. |
 | `profile build` is a separate, rarely-run command | Per user: the knowledge-base (MyProfile) synthesis from resumes only needs to happen when a new skill/project/resume is added — not on every daily run. It is intentionally decoupled from `run-all`. |
 | CLI is a thin layer over a plain importable package | Every capability (`search_jobs`, `score_jobs`, `generate_docs`, `build_report`, `build_summary`, `build_profile`) is a normal Python function in `src/jobhunt/*.py`, independent of Typer/argparse. `cli.py` only parses args and calls these functions. This means the exact same functions can later be wrapped as a **Copilot CLI custom skill/tool** without rewriting logic. No business logic lives inside a `@app.command()` body. |
 
@@ -80,9 +80,9 @@ Per user request, keep this option open without building it now:
 ### Daily: `jobhunt run-all` (or step-by-step)
 1. **search** — Playwright launches with a persistent browser context (cookies/session saved under `state/browser_profile/`). User logs into each portal once manually; subsequent runs reuse the session. Runs configured search queries per portal (`config/config.yaml`), extracts: url, title, company, location, salary (if listed), portal, posted/first_seen date, and full JD text. Upserts into SQLite `jobs` table keyed by `url` — new rows get `status='new'`, existing rows preserve `first_seen` and any manually-set `status` (e.g. `applied`, `rejected`, `ignored`).
 2. **score** — For jobs without a `matchScore` yet, sends JD text + `my_profile.json` to the LLM, which returns a 1-10 `matchScore` plus a short rationale (stored for transparency/debugging, not necessarily shown in the final report).
-3. **generate** — For jobs where `matchScore > 8` and no resume/cover letter yet generated: LLM selects and phrases only *existing* profile content (skills/experience/projects) relevant to that JD into the Jinja2 resume/cover-letter templates. Rendered via headless Chromium (Playwright `page.pdf()`) to PDF, capped at 2-3 pages, ATS-friendly (semantic HTML, standard fonts, no tables/images/icons that break parsing). Output saved under `output/<date>/resumes/` and `output/<date>/cover_letters/`.
+3. **generate** — For jobs where `matchScore > 8` and no resume/cover letter yet generated: LLM selects and phrases only *existing* profile content (skills/experience/projects) relevant to that JD into the Jinja2 resume/cover-letter templates. Written as `.html` files (not auto-rendered PDFs) so the user prints/"Save as PDF" manually, retaining control over final styling; capped at 2-3 pages via a throwaway Playwright page-count check that drives an auto-trim loop, ATS-friendly (semantic HTML, standard fonts, no tables/images/icons that break parsing). Output saved under `output/<date>/resumes/` and `output/<date>/cover_letters/`.
 4. **report** — Dumps the required table: `url, first_seen, portal, title, company, status, location, salary, matchScore` as CSV and HTML, sorted by `matchScore` descending.
-5. **summary** — Single HTML/Markdown page listing all `matchScore > 8` jobs with links to their generated resume/cover letter PDFs — the "ready to apply" shortlist for the day.
+5. **summary** — Single HTML/Markdown page listing all `matchScore > 8` jobs with links to their generated resume/cover letter HTML files (open and print/"Save as PDF" when ready) — the "ready to apply" shortlist for the day.
 
 ## Configuration (`config/config.yaml`)
 
@@ -166,8 +166,8 @@ jobhunt-ops/
     YYYY-MM-DD/
       report.csv / report.html
       summary.html
-      resumes/<company>_<title>.pdf
-      cover_letters/<company>_<title>.pdf
+      resumes/<company>_<title>.html
+      cover_letters/<company>_<title>.html
   state/
     jobhunt.db                   # sqlite: jobs table (gitignored)
     browser_profile/              # persistent Playwright login sessions (gitignored)
